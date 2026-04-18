@@ -84,7 +84,7 @@ def fetch_data(ticker_symbol):
 st.sidebar.title("⚙️ Control Panel")
 ticker = st.sidebar.text_input("Stock Ticker", "AAPL").upper()
 
-# NEW FEATURE: Dynamic User-Controlled Window Size
+# Dynamic User-Controlled Window Size
 window_size = st.sidebar.slider("AI Lookback Window (Days)", min_value=3, max_value=20, value=5, help="How many days of history the AI uses to predict tomorrow.")
 
 st.sidebar.markdown("---")
@@ -161,6 +161,46 @@ if run_button:
                 st.warning(f"🟡 **ACTION: HOLD / NEUTRAL**")
                 st.write(f"The model predicts minimal movement (${delta:.2f} or {percent_change:.2f}%). The asset is currently consolidating. Wait for a clearer trend breakout before deploying capital.")
 
+            # --- REAL-WORLD RISK MANAGEMENT ENGINE ---
+            st.markdown("---")
+            st.subheader("🛡️ Risk Management Engine")
+            with st.expander("Calculate Position Size based on AI Prediction", expanded=False):
+                r_col1, r_col2 = st.columns(2)
+                
+                with r_col1:
+                    account_balance = st.number_input("Total Account Balance ($)", value=10000.0, step=1000.0)
+                    risk_pct = st.slider("Risk Per Trade (%)", min_value=0.5, max_value=5.0, value=1.0, step=0.5)
+                
+                with r_col2:
+                    # Default stop loss is 2% below/above current price depending on trend
+                    stop_loss_default = current_price * 0.98 if pred_final > current_price else current_price * 1.02
+                    stop_loss = st.number_input("Stop Loss Price ($)", value=float(stop_loss_default), step=1.0)
+                
+                # Calculations
+                risk_amount = account_balance * (risk_pct / 100)
+                sl_distance = abs(current_price - stop_loss)
+                
+                if sl_distance > 0:
+                    position_size = int(risk_amount / sl_distance)
+                    capital_required = position_size * current_price
+                    reward_distance = abs(pred_final - current_price)
+                    rr_ratio = reward_distance / sl_distance if sl_distance > 0 else 0
+                    
+                    st.markdown("#### Execution Plan")
+                    e_col1, e_col2, e_col3 = st.columns(3)
+                    e_col1.metric("Position Size (Shares)", position_size)
+                    e_col2.metric("Capital Required", f"${capital_required:,.2f}")
+                    e_col3.metric("Risk/Reward Ratio", f"1 : {rr_ratio:.2f}")
+                    
+                    if rr_ratio >= 2.0:
+                        st.success("✅ **Favorable Setup:** The AI predicts a reward at least twice as large as your defined risk.")
+                    elif rr_ratio >= 1.0:
+                        st.warning("⚠️ **Marginal Setup:** The predicted reward barely covers the risk. Proceed with caution.")
+                    else:
+                        st.error("🛑 **Poor Setup:** The AI does not predict enough upward movement to justify your stop-loss risk. Do not enter.")
+                else:
+                    st.error("Stop Loss cannot equal Entry Price.")
+
             # --- VISUAL CHART SECTION ---
             st.markdown("---")
             st.subheader(f"📈 {ticker} Trend Analysis")
@@ -194,7 +234,7 @@ if run_button:
             with st.expander("📰 Inspect Sentiment Analysis Feed"):
                 st.dataframe(news, use_container_width=True)
 
-            # --- NEW FEATURE: EXPORT REPORT ---
+            # --- EXPORT REPORT ---
             st.markdown("---")
             st.subheader("📥 Export Financial Data")
             csv = final_df.to_csv(index=False).encode('utf-8')
