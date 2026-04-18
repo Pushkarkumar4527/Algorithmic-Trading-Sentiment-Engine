@@ -83,6 +83,10 @@ def fetch_data(ticker_symbol):
 # --- SIDEBAR ---
 st.sidebar.title("⚙️ Control Panel")
 ticker = st.sidebar.text_input("Stock Ticker", "AAPL").upper()
+
+# NEW FEATURE: Dynamic User-Controlled Window Size
+window_size = st.sidebar.slider("AI Lookback Window (Days)", min_value=3, max_value=20, value=5, help="How many days of history the AI uses to predict tomorrow.")
+
 st.sidebar.markdown("---")
 st.sidebar.info("This engine uses a Random Forest Ensemble with Dynamic Quant Retraining.")
 run_button = st.sidebar.button("Execute AI Analysis", use_container_width=True)
@@ -93,7 +97,7 @@ st.caption("Pushkar Kumar | B.Tech Computer Science | ML Project")
 st.markdown("---")
 
 if run_button:
-    with st.spinner(f"Analyzing {ticker} market patterns..."):
+    with st.spinner(f"Analyzing {ticker} market patterns over {window_size}-day sequences..."):
         prices, news, final_df = fetch_data(ticker)
         
         if final_df.empty:
@@ -102,7 +106,6 @@ if run_button:
             if suggestions: st.warning("Did you mean: " + " | ".join(suggestions))
         else:
             # --- AI TRAINING LOGIC ---
-            # Define labels exactly as they appear in the data slice
             feat_labels = ['Close', 'Sentiment', 'SMA_50', 'EMA_200', 'MACD', 'RSI']
             ml_data = final_df[feat_labels].values
             
@@ -110,7 +113,6 @@ if run_button:
             scaled = scaler.fit_transform(ml_data)
             
             X, y = [], []
-            window_size = 5
             for i in range(window_size, len(scaled)):
                 X.append(scaled[i-window_size:i].flatten())
                 y.append(scaled[i, 0])
@@ -127,22 +129,37 @@ if run_button:
             dummy = np.zeros((1, len(feat_labels)))
             dummy[0,0] = pred_raw
             pred_final = scaler.inverse_transform(dummy)[0,0]
+            
             delta = pred_final - current_price
+            percent_change = (delta / current_price) * 100
 
             # --- DISPLAY METRICS ---
             col1, col2, col3 = st.columns(3)
             col1.metric("Current Price", f"${current_price:.2f}")
-            col2.metric("AI Predicted Price", f"${pred_final:.2f}", f"{delta:.2f}")
+            col2.metric("AI Predicted Price", f"${pred_final:.2f}", f"{delta:.2f} ({percent_change:.2f}%)")
             col3.metric("Current RSI", f"{final_df['RSI'].iloc[-1]:.2f}")
+
+            # --- CONFIDENCE SCORE ---
+            alignment = 0
+            if (pred_final > current_price and final_df['MACD'].iloc[-1] > 0): alignment += 1
+            if (pred_final > current_price and final_df['RSI'].iloc[-1] < 70): alignment += 1
+            if (pred_final < current_price and final_df['MACD'].iloc[-1] < 0): alignment += 1
+            if (pred_final < current_price and final_df['RSI'].iloc[-1] > 30): alignment += 1
+            
+            confidence = 60 + (alignment * 15) # Base 60%, +15% for each aligning indicator
+            st.progress(confidence / 100, text=f"🤖 Model Confidence: {confidence}% (Based on Indicator Alignment)")
 
             # --- TRADING SIGNAL BOX ---
             st.markdown("### 📊 Strategy Recommendation")
-            if pred_final > current_price:
-                st.success(f"🚀 **BULLISH SIGNAL DETECTED**")
-                st.write(f"The model anticipates an upward move of ${delta:.2f}. Momentum indicators suggest potential growth.")
+            if percent_change >= 1.5:
+                st.success(f"🟢 **ACTION: STRONG BUY**")
+                st.write(f"The model anticipates a significant upward move of ${delta:.2f} (+{percent_change:.2f}%). Momentum indicators and sentiment align for potential growth.")
+            elif percent_change <= -1.5:
+                st.error(f"🔴 **ACTION: STRONG SELL**")
+                st.write(f"The model anticipates a downward correction of ${abs(delta):.2f} ({percent_change:.2f}%). Liquidating or implementing tight stop-losses is advised.")
             else:
-                st.error(f"📉 **BEARISH SIGNAL DETECTED**")
-                st.write(f"The model anticipates a correction of ${abs(delta):.2f}. Caution or stop-loss implementation is advised.")
+                st.warning(f"🟡 **ACTION: HOLD / NEUTRAL**")
+                st.write(f"The model predicts minimal movement (${delta:.2f} or {percent_change:.2f}%). The asset is currently consolidating. Wait for a clearer trend breakout before deploying capital.")
 
             # --- VISUAL CHART SECTION ---
             st.markdown("---")
@@ -154,13 +171,10 @@ if run_button:
             # --- EXPLAINABLE AI SECTION ---
             st.markdown("---")
             with st.expander("🧠 Deep Dive: How the AI made this decision"):
-                st.write("The chart below shows which features the Random Forest model prioritized for this specific prediction.")
+                st.write(f"The chart below shows which features the Random Forest model prioritized across the {window_size}-day window for this specific prediction.")
                 
-                # Fetch importance from model
+                # Fetch importance from model and average across the window size
                 importances = model.feature_importances_
-                
-                # We used a flattened window of 5 days, so we average importance across the window for display
-                # There are 30 total importance values (6 features * 5 days). We sum them by feature.
                 reshaped_importances = importances.reshape(window_size, len(feat_labels))
                 avg_importances = np.mean(reshaped_importances, axis=0)
                 
@@ -180,10 +194,21 @@ if run_button:
             with st.expander("📰 Inspect Sentiment Analysis Feed"):
                 st.dataframe(news, use_container_width=True)
 
+            # --- NEW FEATURE: EXPORT REPORT ---
+            st.markdown("---")
+            st.subheader("📥 Export Financial Data")
+            csv = final_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="Download Quant Data as CSV",
+                data=csv,
+                file_name=f'{ticker}_quant_report.csv',
+                mime='text/csv',
+            )
+
             # --- FOOTER ---
             st.markdown("---")
             st.subheader("⚙️ Engine Architecture")
             i_col1, i_col2, i_col3 = st.columns(3)
             i_col1.write("**Algorithm:** Random Forest Ensemble")
             i_col2.write("**Input:** 6-Feature Quant Vector")
-            i_col3.write("**Training:** Dynamic (On-the-Fly)")
+            i_col3.write(f"**Parameters:** {window_size}-Day Dynamic Training")
