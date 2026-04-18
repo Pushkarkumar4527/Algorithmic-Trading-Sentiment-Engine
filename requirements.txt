@@ -1,7 +1,6 @@
-yfinance==0.2.38
+yfinance
 pandas
 numpy
 requests
 textblob
 scikit-learn
-tensorflow-cpu==2.15.0
