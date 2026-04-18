@@ -1,8 +1,7 @@
-streamlit
+yfinance
 pandas
 numpy
-yfinance
 requests
 textblob
 scikit-learn
-tensorflow
+tensorflow-cpu
