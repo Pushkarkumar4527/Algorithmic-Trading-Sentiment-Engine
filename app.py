@@ -48,12 +48,11 @@ def add_technical_indicators(df):
     delta = df['Close'].diff()
     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-    rs = gain / loss
-    df['RSI'] = 100 - (100 / (1 + rs))
+    df['RSI'] = 100 - (100 / (1 + (gain / loss)))
     
     return df.dropna()
 
-@st.cache_data(ttl=3600) # Cache for 1 hour to stay fast
+@st.cache_data(ttl=3600)
 def fetch_data(ticker_symbol):
     stock = yf.Ticker(ticker_symbol)
     prices = stock.history(start="2010-01-01")
@@ -102,42 +101,45 @@ if run_button:
             st.error(f"Invalid Ticker: {ticker}")
             if suggestions: st.warning("Did you mean: " + " | ".join(suggestions))
         else:
-            # AI TRAINING LOGIC
-            feat_labels = ['Price', 'Sentiment', 'SMA_50', 'EMA_200', 'MACD', 'RSI']
-            ml_data = final_df[['Close', 'Sentiment', 'SMA_50', 'EMA_200', 'MACD', 'RSI']].values
+            # --- AI TRAINING LOGIC ---
+            # Define labels exactly as they appear in the data slice
+            feat_labels = ['Close', 'Sentiment', 'SMA_50', 'EMA_200', 'MACD', 'RSI']
+            ml_data = final_df[feat_labels].values
+            
             scaler = MinMaxScaler()
             scaled = scaler.fit_transform(ml_data)
             
             X, y = [], []
-            for i in range(5, len(scaled)):
-                X.append(scaled[i-5:i].flatten())
+            window_size = 5
+            for i in range(window_size, len(scaled)):
+                X.append(scaled[i-window_size:i].flatten())
                 y.append(scaled[i, 0])
             
             model = RandomForestRegressor(n_estimators=100, random_state=42)
             model.fit(X, y)
             
-            # PREDICTION
+            # --- PREDICTION ---
             current_price = final_df['Close'].iloc[-1]
-            last_window = scaled[-5:].flatten().reshape(1, -1)
+            last_window = scaled[-window_size:].flatten().reshape(1, -1)
             pred_raw = model.predict(last_window)[0]
             
-            # Inverse Scale to get real price
-            dummy = np.zeros((1, 6))
+            # Inverse Scale
+            dummy = np.zeros((1, len(feat_labels)))
             dummy[0,0] = pred_raw
             pred_final = scaler.inverse_transform(dummy)[0,0]
             delta = pred_final - current_price
 
-            # DISPLAY METRICS
+            # --- DISPLAY METRICS ---
             col1, col2, col3 = st.columns(3)
             col1.metric("Current Price", f"${current_price:.2f}")
             col2.metric("AI Predicted Price", f"${pred_final:.2f}", f"{delta:.2f}")
             col3.metric("Current RSI", f"{final_df['RSI'].iloc[-1]:.2f}")
 
-            # TRADING SIGNAL BOX
+            # --- TRADING SIGNAL BOX ---
             st.markdown("### 📊 Strategy Recommendation")
             if pred_final > current_price:
                 st.success(f"🚀 **BULLISH SIGNAL DETECTED**")
-                st.write(f"The model anticipates a upward move of ${delta:.2f}. Momentum indicators support potential entry.")
+                st.write(f"The model anticipates an upward move of ${delta:.2f}. Momentum indicators suggest potential growth.")
             else:
                 st.error(f"📉 **BEARISH SIGNAL DETECTED**")
                 st.write(f"The model anticipates a correction of ${abs(delta):.2f}. Caution or stop-loss implementation is advised.")
@@ -147,18 +149,30 @@ if run_button:
             st.subheader(f"📈 {ticker} Trend Analysis")
             chart_data = final_df[['Close', 'SMA_50', 'EMA_200']].tail(100)
             st.line_chart(chart_data)
-            st.caption("Visualizing the Closing Price against 50-day SMA and 200-day EMA to identify trend reversals.")
+            st.caption("Visualizing Closing Price against 50-day SMA and 200-day EMA.")
 
             # --- EXPLAINABLE AI SECTION ---
             st.markdown("---")
             with st.expander("🧠 Deep Dive: How the AI made this decision"):
                 st.write("The chart below shows which features the Random Forest model prioritized for this specific prediction.")
+                
+                # Fetch importance from model
                 importances = model.feature_importances_
-                importance_df = pd.DataFrame({'Feature': feat_labels, 'Importance': importances}).sort_values(by='Importance', ascending=False)
+                
+                # We used a flattened window of 5 days, so we average importance across the window for display
+                # There are 30 total importance values (6 features * 5 days). We sum them by feature.
+                reshaped_importances = importances.reshape(window_size, len(feat_labels))
+                avg_importances = np.mean(reshaped_importances, axis=0)
+                
+                importance_df = pd.DataFrame({
+                    'Feature': feat_labels, 
+                    'Importance': avg_importances
+                }).sort_values(by='Importance', ascending=False)
+                
                 st.bar_chart(importance_df.set_index('Feature'))
-                st.info("High importance in 'RSI' or 'MACD' means the model is following technical momentum, while high 'Sentiment' importance means it is reacting to news.")
+                st.info("The model weights technical data (RSI/MACD) and sentiment to find the most likely next-day price.")
 
-            # EXPANDABLE DATA SECTIONS
+            # --- DATA SECTIONS ---
             st.markdown("---")
             with st.expander("🔍 Inspect Quantitative Vector Data"):
                 st.dataframe(final_df.tail(20), use_container_width=True)
@@ -166,10 +180,10 @@ if run_button:
             with st.expander("📰 Inspect Sentiment Analysis Feed"):
                 st.dataframe(news, use_container_width=True)
 
-            # MODEL INTELLIGENCE FOOTER
+            # --- FOOTER ---
             st.markdown("---")
             st.subheader("⚙️ Engine Architecture")
             i_col1, i_col2, i_col3 = st.columns(3)
             i_col1.write("**Algorithm:** Random Forest Ensemble")
-            i_col2.write("**Input:** 6D Quant-Sentiment Vector")
+            i_col2.write("**Input:** 6-Feature Quant Vector")
             i_col3.write("**Training:** Dynamic (On-the-Fly)")
