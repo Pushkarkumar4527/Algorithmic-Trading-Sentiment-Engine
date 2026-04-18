@@ -60,7 +60,7 @@ To run this project locally, follow these steps:
 
 **Pushkar Kumar** *B.Tech Computer Science Student*
 
-[🔗 LinkedIn]([https://linkedin.com/in/your-username](https://www.linkedin.com/in/pushkar-kumar8105/)) | [✉️ Email](mailto:pushkar81005@gmail.com)
+[🔗 LinkedIn](https://www.linkedin.com/in/pushkar-kumar8105/) | [✉️ Email](mailto:pushkar81005@gmail.com)
 
 ---
 
