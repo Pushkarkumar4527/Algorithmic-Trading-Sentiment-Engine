@@ -56,13 +56,13 @@ To run this project locally, follow these steps:
 3. **Launch the application:**
    ```bash
    streamlit run app.py
-   ---
+
 
 ## 👨‍💻 Developed By
 
 **Pushkar Kumar** *B.Tech Computer Science Student*
 
-[🔗 LinkedIn](https://linkedin.com/in/your-username) | [📁 Portfolio](https://your-portfolio-link.com) | [✉️ Email](mailto:your-email@example.com)
+[🔗 LinkedIn]([https://linkedin.com/in/your-username](https://www.linkedin.com/in/pushkar-kumar8105/)) | [✉️ Email](mailto:pushkar81005@gmail.com)
 
 ---
 
