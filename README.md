@@ -1,6 +1,8 @@
 # 🤖 Algorithmic Trading Sentiment Engine
 ### *A Dynamic Machine Learning Pipeline for Quant-Driven Stock Prediction*
 
+
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_svg)](https://pushkar-trading-engine.streamlit.app)
 ---
 
 ## 📌 Project Overview
