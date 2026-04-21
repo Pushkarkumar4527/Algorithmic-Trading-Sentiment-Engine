@@ -1,6 +1,7 @@
-yfinance
+streamlit
 pandas
 numpy
-requests
+yfinance>=0.2.37
 textblob
 scikit-learn
+requests

@@ -49,10 +49,20 @@ def add_technical_indicators(df):
 @st.cache_data(ttl=3600)
 def fetch_data(ticker_symbol):
     stock = yf.Ticker(ticker_symbol)
-    prices = stock.history(start="2010-01-01")
-    if prices.empty: return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+    
+    # Try-Except block to handle Yahoo Finance Rate Limits/Crashes
+    try:
+        prices = stock.history(start="2010-01-01")
+    except Exception as e:
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+        
+    if prices.empty: 
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+    
     prices = prices[['Close', 'Volume']].reset_index()
     prices['Date'] = pd.to_datetime(prices['Date']).dt.tz_localize(None).dt.date
+    
+    # News & Sentiment
     url = f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker_symbol}"
     headers = {'User-Agent': 'Mozilla/5.0'}
     try:
@@ -63,8 +73,10 @@ def fetch_data(ticker_symbol):
                        'Sentiment': TextBlob(i.find('title').text).sentiment.polarity} 
                       for i in root.findall('.//item')]
     except: clean_news = []
+    
     news_df = pd.DataFrame(clean_news) if clean_news else pd.DataFrame(columns=['Date', 'Headline', 'Sentiment'])
     daily_sent = news_df.groupby('Date')['Sentiment'].mean().reset_index() if not news_df.empty else pd.DataFrame(columns=['Date', 'Sentiment'])
+    
     final_df = pd.merge(prices, daily_sent, on='Date', how='left').fillna(0)
     final_df = add_technical_indicators(final_df)
     return prices, news_df, final_df
@@ -92,7 +104,7 @@ if run_button:
         prices, news, final_df = fetch_data(ticker_input)
         if final_df.empty:
             suggestions = get_ticker_suggestions(ticker_input)
-            st.error(f"Invalid Ticker: {ticker_input}")
+            st.error(f"Data unavailable for {ticker_input}. This may be an invalid ticker, or Yahoo Finance is temporarily rate-limiting the server. Please try again in a few minutes.")
             if suggestions: st.warning("Did you mean: " + " | ".join(suggestions))
         else:
             # Training Logic
@@ -177,7 +189,6 @@ if st.session_state.res:
 
     with st.expander("🧠 Deep Dive: Explainable AI"):
         imps = r['model'].feature_importances_
-        # CRITICAL FIX: Use 'trained_window' instead of the slider variable
         reshaped = imps.reshape(r['trained_window'], len(r['feat_labels']))
         avg_imps = np.mean(reshaped, axis=0)
         imp_df = pd.DataFrame({'Feature': r['feat_labels'], 'Importance': avg_imps}).sort_values('Importance', ascending=False)
