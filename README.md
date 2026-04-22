@@ -1,69 +1,112 @@
 # 🤖 Algorithmic Trading Sentiment Engine
-### *A Dynamic Machine Learning Pipeline for Quant-Driven Stock Prediction*
+### A Dynamic Machine Learning Pipeline for Quant-Driven Stock Prediction
 
-
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_svg)](https://pushkar-trading-engine.streamlit.app)
 ---
 
 ## 📌 Project Overview
-This project is a sophisticated financial tool that bridges the gap between **Market Psychology (Sentiment Analysis)** and **Quantitative Data Engineering**. 
 
-Unlike traditional static models that fail when applied to new stocks, this engine performs **Dynamic On-The-Fly Training**. It allows users to input any global stock ticker and receive a real-time prediction by analyzing the last 16 years of market patterns combined with today's live news sentiment.
+This project is a sophisticated financial tool that bridges the gap between **Market Psychology (Sentiment Analysis)** and **Quantitative Data Engineering**.
 
-## 🚀 Key Features
-* **Dynamic Ensemble Learning:** Implements a `Random Forest Regressor` that retrains instantly for every unique ticker, ensuring the AI understands the specific price scale and volatility of the selected asset.
-* **Sentiment Scraper:** Real-time RSS feed parsing of Yahoo Finance news using **NLP (Natural Language Processing)** to generate sentiment polarity scores via `TextBlob`.
-* **Quant-Library:** Automatically engineers high-tier technical indicators:
-    * **SMA & EMA:** Identifies long-term and short-term trends.
-    * **MACD:** Tracks price momentum and trend reversals.
-    * **RSI:** Detects overbought or oversold market conditions.
-* **Smart Ticker Search:** Integrated search API that handles fuzzy logic (e.g., suggesting `GOOGL` when a user enters "Google").
-* **Fault-Tolerant Design:** Production-ready error handling for API timeouts, empty news arrays, and invalid symbol inputs.
+Unlike traditional static models that fail when applied to new stocks, this engine performs **Dynamic On-The-Fly Training**. It allows users to input any global stock ticker and receive a real-time prediction by analyzing up to **16 years of market patterns** combined with **live news sentiment**.
+
+Beyond simple price prediction, the engine includes a **complete Risk Management suite**, transforming it from a machine learning experiment into a practical **algorithmic trading dashboard**.
 
 ---
 
-## 🛠️ The Tech Stack
-| Category | Tools |
-| :--- | :--- |
-| **Language** | Python 3.10+ |
-| **UI Framework** | Streamlit |
-| **AI / ML** | Scikit-Learn, NumPy |
-| **Data Engineering** | Pandas, YFinance |
-| **NLP** | TextBlob |
-| **Deployment** | GitHub, Streamlit Community Cloud |
+## 🚀 Key Features
+
+### 🔹 Dynamic Ensemble Learning
+- Uses a **Random Forest Regressor**
+- Retrains dynamically for each ticker
+- Adapts to asset-specific volatility and price scale
+
+### 🔹 Explainable AI (XAI)
+- Feature Importance visualization
+- Shows whether prediction relies more on:
+  - Technical indicators (RSI, MACD, etc.)
+  - News sentiment
+
+### 🔹 Risk Management Engine
+- Position sizing calculator
+- Inputs:
+  - Account balance
+  - Risk tolerance (%)
+  - Stop-loss
+- Outputs:
+  - Shares to buy
+  - Risk/Reward ratio
+
+### 🔹 Sentiment Scraper
+- Parses Yahoo Finance RSS feeds
+- Uses NLP via TextBlob
+- Generates sentiment polarity scores
+
+### 🔹 Quant Library (Auto Feature Engineering)
+- **SMA & EMA** → Trend detection
+- **MACD** → Momentum & reversals
+- **RSI** → Overbought/Oversold signals
+
+### 🔹 Interactive Control Panel
+- Adjustable **Lookback Window**
+- Test short-term vs long-term strategies
+
+### 🔹 Data Export
+- Download processed dataset as CSV
+- Useful for backtesting and research
+
+---
+
+## 🛠️ Tech Stack
+
+| Category            | Tools                          |
+|--------------------|--------------------------------|
+| Language           | Python 3.10+                  |
+| UI Framework       | Streamlit                     |
+| AI / ML            | Scikit-Learn, NumPy           |
+| Data Engineering   | Pandas, YFinance              |
+| NLP                | TextBlob                      |
+| Deployment         | GitHub, Streamlit Cloud       |
 
 ---
 
 ## 📈 System Architecture
-1.  **Data Ingestion:** Live extraction of historical OHLCV (Open, High, Low, Close, Volume) data.
-2.  **Feature Engineering:** Parallel calculation of 4 technical indicators and news sentiment polarity.
-3.  **Preprocessing:** Normalization of multi-variant data using `MinMaxScaler`.
-4.  **Training:** Dynamic training of a Random Forest Ensemble with 100 decision trees.
-5.  **Inference:** Predicting the "Next-Day" closing price using a 5-day sliding window.
+
+### 1️⃣ Data Ingestion
+- Historical OHLCV data (YFinance)
+- Real-time news headlines
+
+### 2️⃣ Feature Engineering
+- Technical indicators + sentiment
+- Creates a 6D Feature Vector
+
+### 3️⃣ Preprocessing
+- Data normalization using MinMaxScaler
+
+### 4️⃣ Model Training
+- Random Forest with 100 decision trees
+
+### 5️⃣ Inference
+- Predicting the Next-Day closing price
+
+### 6️⃣ Strategy Execution
+- Generates Buy / Hold / Sell signals
+- Calculates capital exposure via Risk Management Engine
 
 ---
 
 ## 💻 Local Setup
-To run this project locally, follow these steps:
 
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/Pushkarkumar4527/trading-ai-engine.git](https://github.com/Pushkarkumar4527/trading-ai-engine.git)
-   cd trading-ai-engine
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-3. **Launch the application:**
-   ```bash
-   streamlit run app.py
-
-
-## 👨‍💻 Developed By
-
-**Pushkar Kumar** *B.Tech Computer Science Student*
-
-[🔗 LinkedIn](https://www.linkedin.com/in/pushkar-kumar8105/) | [✉️ Email](mailto:pushkar81005@gmail.com)
-
----
-
-> **⚠️ Disclaimer:** *This tool is created for educational and portfolio purposes only. Financial markets involve significant risk. The predictions generated by this AI are based on historical data and sentiment analysis and should not be used as actual financial advice or for real-world trading decisions.*
+1.  Clone the repository
+```bash
+git clone https://github.com/Pushkarkumar4527/trading-ai-engine.git
+cd trading-ai-engine
+2.  Install Dependencies
+```
+2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+3. Run the application
+```bash
+streamlit run app.py
+```
