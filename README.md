@@ -11,14 +11,14 @@ This project is a sophisticated financial tool that bridges the gap between **Ma
 Unlike traditional static models that fail when applied to new stocks, this engine performs **Dynamic On-The-Fly Training**. It allows users to input any global stock ticker and receive a real-time prediction by analyzing the last 16 years of market patterns combined with today's live news sentiment.
 
 ## 🚀 Key Features
-* **Dynamic Ensemble Learning:** Implements a `Random Forest Regressor` that retrains instantly for every unique ticker, ensuring the AI understands the specific price scale and volatility of the selected asset.
-* **Sentiment Scraper:** Real-time RSS feed parsing of Yahoo Finance news using **NLP (Natural Language Processing)** to generate sentiment polarity scores via `TextBlob`.
-* **Quant-Library:** Automatically engineers high-tier technical indicators:
-    * **SMA & EMA:** Identifies long-term and short-term trends.
-    * **MACD:** Tracks price momentum and trend reversals.
-    * **RSI:** Detects overbought or oversold market conditions.
-* **Smart Ticker Search:** Integrated search API that handles fuzzy logic (e.g., suggesting `GOOGL` when a user enters "Google").
-* **Fault-Tolerant Design:** Production-ready error handling for API timeouts, empty news arrays, and invalid symbol inputs.
+* **Dynamic Ensemble Learning:** Implements a `Random Forest Regressor` that retrains instantly for every unique ticker.
+* **Industry Peer Comparison:** Automatically discovers a stock's top 3 market competitors, fetching their data and training separate AI models in the background to provide a side-by-side valuation and predicted growth comparison.
+* **Live Model Evaluation:** Automatically executes an 80/20 Time-Series split on historical data to display real-time evaluation metrics (MAE, RMSE, R² Score) converted back into raw Dollar amounts.
+* **Company Fundamentals Dashboard:** Pulls real-time financial background data including Market Cap, P/E Ratio, Dividend Yield, and Sector summaries.
+* **Interactive Candlestick Charts:** Uses `Plotly` to render beautiful, interactive OHLC candlestick charts overlaid with moving averages.
+* **Professional PDF Export:** Dynamically generates a formatted Wall Street-style Executive Summary PDF using `FPDF` for the user to download.
+* **Sentiment Scraper:** Real-time RSS feed parsing of Yahoo Finance news using **NLP** (`TextBlob`) to generate sentiment polarity scores.
+* **Quant-Library:** Automatically engineers `SMA_50`, `EMA_200`, `MACD`, and `RSI`.
 
 ---
 
@@ -29,17 +29,19 @@ Unlike traditional static models that fail when applied to new stocks, this engi
 | **UI Framework** | Streamlit |
 | **AI / ML** | Scikit-Learn, NumPy |
 | **Data Engineering** | Pandas, YFinance |
+| **Visualization** | Plotly |
+| **PDF Engine** | FPDF2 |
 | **NLP** | TextBlob |
-| **Deployment** | GitHub, Streamlit Community Cloud |
 
 ---
 
 ## 📈 System Architecture
-1.  **Data Ingestion:** Live extraction of historical OHLCV (Open, High, Low, Close, Volume) data.
-2.  **Feature Engineering:** Parallel calculation of 4 technical indicators and news sentiment polarity.
-3.  **Preprocessing:** Normalization of multi-variant data using `MinMaxScaler`.
-4.  **Training:** Dynamic training of a Random Forest Ensemble with 100 decision trees.
-5.  **Inference:** Predicting the "Next-Day" closing price using a 5-day sliding window.
+1.  **Data Ingestion & Fundamentals:** Live extraction of historical OHLCV data and company fundamentals via `yfinance`.
+2.  **Competitor Discovery:** Queries the Yahoo Finance recommendations endpoint to find highly correlated peers.
+3.  **Feature Engineering:** Parallel calculation of 4 technical indicators and news sentiment polarity.
+4.  **Preprocessing & Evaluation:** Normalization of multi-variant data using `MinMaxScaler` and executing an 80/20 historical split to test AI accuracy.
+5.  **Multi-Model Training:** Dynamic training of Random Forest Ensembles for both the target asset and its industry peers.
+6.  **Inference:** Predicting the "Next-Day" closing price using a sliding window and displaying results on an interactive dashboard.
 
 ---
 

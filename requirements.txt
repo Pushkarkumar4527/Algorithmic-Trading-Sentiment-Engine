@@ -5,3 +5,5 @@ yfinance>=0.2.37
 textblob
 scikit-learn
 requests
+plotly
+fpdf2
